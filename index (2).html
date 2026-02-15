@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FundShield — The Funding Rate Risk Market</title>
+<meta name="description" content="FundShield is a decentralized funding rate swap protocol. Convert variable perpetual futures funding exposure into fixed, predictable rates.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #06080F;
+  --bg2: #0B0E1A;
+  --card: #10142A;
+  --border: #1A1F3A;
+  --accent: #4F7AFF;
+  --accent2: #00D4AA;
+  --red: #FF4D6A;
+  --text: #E8EAF0;
+  --muted: #6B7394;
+  --dim: #3A3F5C;
+  --glow: rgba(79, 122, 255, 0.15);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* GRID BACKGROUND */
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(79, 122, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 122, 255, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+}
+
+/* GLOW ORB */
+.glow-orb {
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(79, 122, 255, 0.08), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: orbPulse 8s ease-in-out infinite;
+}
+
+@keyframes orbPulse {
+  0%, 100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.15); }
+}
+
+/* NAV */
+nav {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 100;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(20px);
+  background: rgba(6, 8, 15, 0.85);
+  border-bottom: 1px solid var(--border);
+  transition: all 0.3s;
+}
+nav.scrolled { background: rgba(6, 8, 15, 0.95); }
+.logo {
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.logo-icon {
+  width: 28px; height: 28px;
+  border: 2px solid var(--accent);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  transform: rotate(-10deg);
+}
+.nav-links { display: flex; gap: 2rem; align-items: center; }
+.nav-links a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s;
+  letter-spacing: 0.5px;
+}
+.nav-links a:hover { color: var(--text); }
+.nav-cta {
+  background: var(--accent) !important;
+  color: #fff !important;
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 600 !important;
+  transition: all 0.2s !important;
+}
+.nav-cta:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* SECTIONS */
+section {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding-top: 5rem;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 2rem;
+  animation: fadeUp 0.8s ease forwards;
+  opacity: 0;
+}
+.hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent2); animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.hero h1 {
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  margin-bottom: 1.5rem;
+  animation: fadeUp 0.8s 0.1s ease forwards;
+  opacity: 0;
+}
+.hero h1 .gradient {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: var(--muted);
+  max-width: 640px;
+  margin-bottom: 2.5rem;
+  animation: fadeUp 0.8s 0.2s ease forwards;
+  opacity: 0;
+}
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  animation: fadeUp 0.8s 0.3s ease forwards;
+  opacity: 0;
+}
+.btn {
+  padding: 0.85rem 2rem;
+  border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.25s;
+  cursor: pointer;
+  border: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(79,122,255,0.3); }
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 5rem;
+  animation: fadeUp 0.8s 0.4s ease forwards;
+  opacity: 0;
+}
+.hero-stat {
+  text-align: center;
+}
+.hero-stat .val {
+  font-size: 2.5rem;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--accent);
+}
+.hero-stat .val.red { color: var(--red); }
+.hero-stat .label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* SECTION HEADERS */
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 4px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+.section-title {
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: -1px;
+  margin-bottom: 1rem;
+}
+.section-desc {
+  color: var(--muted);
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin-bottom: 3rem;
+}
+
+/* PROBLEM SECTION */
+.problem { padding-top: 8rem; padding-bottom: 6rem; }
+.problem-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+.problem-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2rem;
+  transition: all 0.3s;
+}
+.problem-card:hover { border-color: var(--dim); transform: translateY(-2px); }
+.problem-card.highlight {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, rgba(255,77,106,0.08), rgba(255,77,106,0.02));
+  border-color: rgba(255,77,106,0.2);
+}
+.problem-card .icon {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+.problem-card .icon.red { background: rgba(255,77,106,0.15); color: var(--red); }
+.problem-card .icon.blue { background: rgba(79,122,255,0.15); color: var(--accent); }
+.problem-card h3 { font-size: 1.15rem; font-weight: 600; margin-bottom: 0.5rem; }
+.problem-card p { color: var(--muted); font-size: 0.95rem; }
+
+/* SOLUTION */
+.solution { padding-top: 8rem; padding-bottom: 6rem; }
+.solution-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+.mode-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.mode-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.mode-card.p2p::before { background: linear-gradient(90deg, var(--accent), transparent); }
+.mode-card.vault::before { background: linear-gradient(90deg, var(--accent2), transparent); }
+.mode-tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  margin-bottom: 1.25rem;
+}
+.mode-card.p2p .mode-tag { background: rgba(79,122,255,0.15); color: var(--accent); }
+.mode-card.vault .mode-tag { background: rgba(0,212,170,0.15); color: var(--accent2); }
+.mode-card h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; }
+.mode-card .desc { color: var(--muted); margin-bottom: 1.5rem; font-size: 0.95rem; }
+.mode-features { list-style: none; }
+.mode-features li {
+  padding: 0.5rem 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border-top: 1px solid var(--border);
+}
+.mode-features li:first-child { border-top: none; }
+.check { color: var(--accent2); font-weight: 700; }
+
+/* HOW IT WORKS */
+.how { padding-top: 8rem; padding-bottom: 6rem; }
+.flow-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-top: 2rem;
+  position: relative;
+}
+.flow-steps::before {
+  content: '';
+  position: absolute;
+  top: 40px;
+  left: 12.5%;
+  right: 12.5%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  opacity: 0.3;
+  z-index: 0;
+}
+.flow-step {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.step-num {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0 auto 1rem;
+}
+.flow-step h4 { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
+.flow-step p { color: var(--muted); font-size: 0.85rem; }
+
+/* SECURITY */
+.security { padding-top: 8rem; padding-bottom: 6rem; }
+.security-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+.sec-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.75rem;
+  transition: all 0.3s;
+}
+.sec-card:hover { border-color: var(--dim); }
+.sec-card .sec-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+.sec-card h4 { font-size: 1rem; font-weight: 600; margin-bottom: 0.4rem; }
+.sec-card p { color: var(--muted); font-size: 0.85rem; }
+
+/* TOKEN */
+.token { padding-top: 8rem; padding-bottom: 6rem; }
+.token-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+.token-info-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2.5rem;
+}
+.token-info-card h3 { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; }
+.token-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.95rem;
+}
+.token-row:last-child { border-bottom: none; }
+.token-row .k { color: var(--muted); }
+.token-row .v { font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+
+.utility-list { list-style: none; }
+.utility-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.utility-list li:last-child { border-bottom: none; }
+.utility-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: 0.5rem;
+  flex-shrink: 0;
+}
+.utility-list h4 { font-size: 0.95rem; font-weight: 600; }
+.utility-list p { color: var(--muted); font-size: 0.85rem; margin-top: 0.15rem; }
+
+/* CTA */
+.cta-section {
+  padding: 8rem 2rem;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.cta-box {
+  max-width: 700px;
+  margin: 0 auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4rem 3rem;
+  position: relative;
+  overflow: hidden;
+}
+.cta-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+}
+.cta-box h2 { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
+.cta-box p { color: var(--muted); margin-bottom: 2rem; }
+.cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+/* FOOTER */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  position: relative;
+  z-index: 1;
+}
+footer a { color: var(--dim); text-decoration: none; }
+footer a:hover { color: var(--accent); }
+.footer-links { display: flex; justify-content: center; gap: 2rem; margin-bottom: 1rem; }
+
+/* SCROLL ANIMATIONS */
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  nav { padding: 0.75rem 1rem; }
+  .nav-links { display: none; }
+  section { padding: 0 1.25rem; }
+  .hero-stats { grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .hero-stat .val { font-size: 1.5rem; }
+  .problem-grid, .solution-cols, .token-grid { grid-template-columns: 1fr; }
+  .flow-steps { grid-template-columns: 1fr 1fr; }
+  .flow-steps::before { display: none; }
+  .security-grid { grid-template-columns: 1fr; }
+  .cta-box { padding: 2.5rem 1.5rem; }
+}
+
+/* MOBILE NAV TOGGLE */
+.mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+@media (max-width: 768px) {
+  .mobile-toggle { display: block; }
+}
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="glow-orb"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <div class="logo">
+    <div class="logo-icon">&#9670;</div>
+    FUNDSHIELD
+  </div>
+  <div class="nav-links">
+    <a href="#problem">Problem</a>
+    <a href="#solution">Solution</a>
+    <a href="#how">How It Works</a>
+    <a href="#security">Security</a>
+    <a href="#token">Token</a>
+    <a href="#cta" class="nav-cta">Get Started</a>
+  </div>
+  <button class="mobile-toggle" onclick="document.querySelector('.nav-links').style.display=document.querySelector('.nav-links').style.display==='flex'?'none':'flex'" aria-label="Menu">&#9776;</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge"><span class="dot"></span> Launching Q2 2026 &mdash; Institutional Beta</div>
+  <h1>Hedge Your<br><span class="gradient">Funding Rate Risk</span></h1>
+  <p class="hero-sub">The first protocol for funding rate swaps. Convert variable perpetual futures funding exposure into fixed, predictable rates. The interest rate swap market of crypto.</p>
+  <div class="hero-actions">
+    <a href="#cta" class="btn btn-primary">Request Access &rarr;</a>
+    <a href="#problem" class="btn btn-outline">Learn More</a>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="val">$100B+</div><div class="label">Daily perp volume exposed to funding</div></div>
+    <div class="hero-stat"><div class="val">$10B+</div><div class="label">Annual funding payments unhedged</div></div>
+    <div class="hero-stat"><div class="val red">0</div><div class="label">Hedging instruments available today</div></div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section class="problem" id="problem">
+  <div class="reveal">
+    <div class="section-label">The Problem</div>
+    <div class="section-title">Funding Rate Risk Is the Largest<br>Unhedged Exposure in Crypto</div>
+    <div class="section-desc">Every perpetual futures position carries variable funding rate exposure. When funding spikes, traders face an impossible choice.</div>
+  </div>
+  <div class="problem-grid">
+    <div class="problem-card reveal">
+      <div class="icon red">&#10007;</div>
+      <h3>Close the Position</h3>
+      <p>Sacrifice your trade thesis entirely. Exit at the worst possible time, during the spike.</p>
+    </div>
+    <div class="problem-card reveal">
+      <div class="icon red">&#10007;</div>
+      <h3>Absorb the Bleed</h3>
+      <p>Watch PnL erode $10K&ndash;$30K per 8-hour cycle. Funding can annualize over 100% during volatile markets.</p>
+    </div>
+    <div class="problem-card highlight reveal">
+      <div class="icon blue">&#9733;</div>
+      <h3>The TradFi Parallel</h3>
+      <p>Interest rate swaps are a <strong>$500 trillion</strong> market because variable rate exposure is untenable at scale. Funding rate swaps are the crypto-native equivalent &mdash; and the market is at zero.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section class="solution" id="solution">
+  <div class="reveal">
+    <div class="section-label">The Solution</div>
+    <div class="section-title">Funding Rate Swaps</div>
+    <div class="section-desc">Lock in a fixed funding rate for 7&ndash;90 days. Know your cost basis. Stay in your position through any market conditions.</div>
+  </div>
+  <div class="solution-cols">
+    <div class="mode-card p2p reveal">
+      <span class="mode-tag">PEER-TO-PEER</span>
+      <h3>Swap Book</h3>
+      <p class="desc">Custom fixed rates, precise notional sizes, and bespoke durations. Designed for institutional desks managing large positions.</p>
+      <ul class="mode-features">
+        <li><span class="check">&#10003;</span> Custom rate negotiation</li>
+        <li><span class="check">&#10003;</span> Any notional size</li>
+        <li><span class="check">&#10003;</span> 7&ndash;90 day durations</li>
+        <li><span class="check">&#10003;</span> Ethereum L1 settlement</li>
+      </ul>
+    </div>
+    <div class="mode-card vault reveal">
+      <span class="mode-tag">INSTANT EXECUTION</span>
+      <h3>Protection Vault</h3>
+      <p class="desc">One-click funding protection backed by pooled LP capital. Algorithmically priced, no counterparty wait. Open to all traders.</p>
+      <ul class="mode-features">
+        <li><span class="check">&#10003;</span> Instant execution</li>
+        <li><span class="check">&#10003;</span> Algorithmic pricing</li>
+        <li><span class="check">&#10003;</span> LP yield 8&ndash;15% APY</li>
+        <li><span class="check">&#10003;</span> Arbitrum L2 for low cost</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how" id="how">
+  <div class="reveal">
+    <div class="section-label">How It Works</div>
+    <div class="section-title">From Variable to Fixed in Minutes</div>
+    <div class="section-desc">A simple flow whether you choose P2P or instant vault execution.</div>
+  </div>
+  <div class="flow-steps">
+    <div class="flow-step reveal">
+      <div class="step-num">01</div>
+      <h4>Select Market</h4>
+      <p>Choose BTC, ETH, or other perp markets. Set your notional and duration.</p>
+    </div>
+    <div class="flow-step reveal">
+      <div class="step-num">02</div>
+      <h4>Lock Fixed Rate</h4>
+      <p>Accept the vault rate or match with a P2P counterparty at your desired rate.</p>
+    </div>
+    <div class="flow-step reveal">
+      <div class="step-num">03</div>
+      <h4>Auto-Settle</h4>
+      <p>Every 8 hours, funding difference is settled automatically via our oracle network.</p>
+    </div>
+    <div class="flow-step reveal">
+      <div class="step-num">04</div>
+      <h4>Predictable PnL</h4>
+      <p>Your funding cost is fixed. Focus on your trade thesis, not funding bleed.</p>
+    </div>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section class="security" id="security">
+  <div class="reveal">
+    <div class="section-label">Security</div>
+    <div class="section-title">Institutional-Grade Security</div>
+    <div class="section-desc">Every dollar in the protocol is someone&rsquo;s livelihood. We build accordingly.</div>
+  </div>
+  <div class="security-grid">
+    <div class="sec-card reveal">
+      <div class="sec-icon">&#128274;</div>
+      <h4>Dual Independent Audits</h4>
+      <p>Two reputable firms. One generalist, one DeFi specialist. Full coverage before mainnet.</p>
+    </div>
+    <div class="sec-card reveal">
+      <div class="sec-icon">&#9989;</div>
+      <h4>Formal Verification</h4>
+      <p>Core math functions mathematically proven correct. No rounding errors, no edge cases.</p>
+    </div>
+    <div class="sec-card reveal">
+      <div class="sec-icon">&#128176;</div>
+      <h4>$250K+ Bug Bounty</h4>
+      <p>Immunefi program live from day one. White-hat incentives aligned with protocol security.</p>
+    </div>
+    <div class="sec-card reveal">
+      <div class="sec-icon">&#128200;</div>
+      <h4>Progressive Caps</h4>
+      <p>Conservative limits at launch, increased gradually as the system proves itself.</p>
+    </div>
+    <div class="sec-card reveal">
+      <div class="sec-icon">&#128225;</div>
+      <h4>Real-Time Monitoring</h4>
+      <p>Forta agents and custom monitoring watching every transaction on both chains, 24/7.</p>
+    </div>
+    <div class="sec-card reveal">
+      <div class="sec-icon">&#9888;&#65039;</div>
+      <h4>Emergency Pause</h4>
+      <p>Guardian multisig can halt operations within minutes if a critical threat is detected.</p>
+    </div>
+  </div>
+</section>
+
+<!-- TOKEN -->
+<section class="token" id="token">
+  <div class="reveal">
+    <div class="section-label">Token</div>
+    <div class="section-title">FUND Token</div>
+    <div class="section-desc">Governance, security, and fee benefits. Non-inflationary, fixed supply.</div>
+  </div>
+  <div class="token-grid">
+    <div class="token-info-card reveal">
+      <h3>Token Details</h3>
+      <div class="token-row"><span class="k">Total Supply</span><span class="v">1,000,000,000</span></div>
+      <div class="token-row"><span class="k">Inflation</span><span class="v" style="color:var(--accent2)">None</span></div>
+      <div class="token-row"><span class="k">Initial Circulating</span><span class="v">8%</span></div>
+      <div class="token-row"><span class="k">Fee Discounts</span><span class="v">Up to 25%</span></div>
+      <div class="token-row"><span class="k">Protocol Fees</span><span class="v" style="color:var(--accent2)">Treasury-governed</span></div>
+      <div class="token-row"><span class="k">Community Allocation</span><span class="v">35%</span></div>
+    </div>
+    <div class="token-info-card reveal">
+      <h3>Utility</h3>
+      <ul class="utility-list">
+        <li>
+          <div class="utility-dot"></div>
+          <div><h4>Treasury Governance</h4><p>Token holders govern the protocol treasury, directing fee revenue toward development, liquidity, and ecosystem growth.</p></div>
+        </li>
+        <li>
+          <div class="utility-dot"></div>
+          <div><h4>Governance</h4><p>Vote on protocol parameters, fee structures, treasury allocation, and upgrades.</p></div>
+        </li>
+        <li>
+          <div class="utility-dot"></div>
+          <div><h4>Oracle Security</h4><p>Operators stake FUND as performance bonds, securing the oracle network.</p></div>
+        </li>
+        <li>
+          <div class="utility-dot"></div>
+          <div><h4>Fee Discounts</h4><p>Token holders receive reduced trading fees up to 25%.</p></div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section" id="cta">
+  <div class="cta-box reveal">
+    <h2>Ready to Hedge Your Funding?</h2>
+    <p>Institutional beta launching Q2 2026. Request early access for whitelisted onboarding, or reach out to discuss partnership opportunities.</p>
+    <div class="cta-actions">
+      <a href="mailto:team@fundshield.xyz" class="btn btn-primary">Request Access &rarr;</a>
+      <a href="https://twitter.com/fundshield" class="btn btn-outline" target="_blank">Follow Updates</a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-links">
+    <a href="mailto:team@fundshield.xyz">Contact</a>
+    <a href="https://twitter.com/fundshield" target="_blank">Twitter</a>
+    <a href="#">Docs (Coming Soon)</a>
+  </div>
+  <p>&copy; 2026 FundShield Protocol. All rights reserved.</p>
+</footer>
+
+<script>
+// Nav scroll effect
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 50);
+});
+
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => entry.target.classList.add('visible'), i * 100);
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
